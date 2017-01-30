@@ -31,7 +31,8 @@ namespace MicroTestRunner
                     Port = 6666,
                     Username = "1",
                     Password = "1",
-                    Database = "IBIS"
+                    Database = "IBIS",
+                    DebugOutput = Console.Out
                 };
 
                 string[] iniLines = client.Connect();

@@ -52,15 +52,17 @@ namespace TinyClient
     {
         private readonly ArrayList _list;
 
-        public SubFieldCollection()
-        {
-            _list = new ArrayList();
-        }
+        public int Length { get { return _list.Count; } }
 
         public SubField this[int index]
         {
             get { return (SubField)_list[index]; }
             set { _list[index] = value; }
+        }
+
+        public SubFieldCollection()
+        {
+            _list = new ArrayList();
         }
 
         public void Add(SubField item)
@@ -122,7 +124,7 @@ namespace TinyClient
             _subFields = new SubFieldCollection();
         }
 
-        public static RecordField Parse(string line)
+        internal static RecordField Parse(string line)
         {
             StringReader reader = new StringReader(line);
             RecordField result = new RecordField(Utility.ReadTo(reader, '#'))
@@ -170,15 +172,17 @@ namespace TinyClient
     {
         private readonly ArrayList _list;
 
-        public FieldCollection()
-        {
-            _list = new ArrayList();
-        }
+        public int Length { get { return _list.Count; } }
 
         public RecordField this[int index]
         {
             get { return (RecordField)_list[index]; }
             set { _list[index] = value; }
+        }
+
+        public FieldCollection()
+        {
+            _list = new ArrayList();
         }
 
         public void Add(RecordField item)
@@ -229,14 +233,14 @@ namespace TinyClient
             _fields = new FieldCollection();
         }
 
-        public static void ParseOneOfMany(MarcRecord record, string text)
+        internal static void ParseOneOfMany(MarcRecord record, string text)
         {
             record.Fields.Clear();
             string[] lines = text.Split(new[] { Utility.ShortDelimiter }, StringSplitOptions.RemoveEmptyEntries);
             ParseSingle(record, lines);
         }
 
-        public static void ParseSingle(MarcRecord record, string[] text)
+        internal static void ParseSingle(MarcRecord record, string[] text)
         {
             char[] delimiters = { '#' };
             string line = text[0];
@@ -256,7 +260,7 @@ namespace TinyClient
             }
         }
 
-        public string Encode()
+        internal string Encode()
         {
             StringBuilder result = new StringBuilder();
             result.AppendFormat("{0}#{1}", Mfn, Status);
@@ -779,6 +783,8 @@ namespace TinyClient
 
         public int QueryID { get; set; }
 
+        public TextWriter DebugOutput { get; set; }
+
         public IrbisClient()
         {
             Host = IPAddress.Loopback;
@@ -795,10 +801,16 @@ namespace TinyClient
             {
                 connection.Connect(Host, Port);
                 byte[] data = query.Encode();
+                if (!ReferenceEquals(DebugOutput, null))
+                {
+                    DebugOutput.WriteLine("QUERY {0}:", QueryID);
+                    DebugOutput.WriteLine();
+                    Utility.DumpBytes(DebugOutput, data);
+                    DebugOutput.WriteLine();
+                }
                 Socket socket = connection.Client;
                 socket.Send(data);
-
-                return new Response(socket);
+                return new Response(this, socket);
             }
         }
 
@@ -842,7 +854,7 @@ namespace TinyClient
             query.AddUtf(record.Encode());
             Response response = ExecuteQuery(query);
             response.CheckReturnCode();
-            return response.ReadUtf();
+            return response.ReadUtf().Trim();
         }
 
         public int GetMaxMfn()
@@ -1057,7 +1069,7 @@ namespace TinyClient
 
         public bool IsEOF { get { return _stream.Position >= _stream.Length; } }
 
-        public Response(Socket socket)
+        public Response(IrbisClient client, Socket socket)
         {
             _stream = new MemoryStream();
 
@@ -1070,6 +1082,14 @@ namespace TinyClient
                     break;
                 }
                 _stream.Write(buffer, 0, read);
+            }
+
+            if (!ReferenceEquals(client.DebugOutput, null))
+            {
+                client.DebugOutput.WriteLine("RESPONSE {0}:", client.QueryID);
+                client.DebugOutput.WriteLine();
+                Utility.DumpBytes(client.DebugOutput, _stream.ToArray());
+                client.DebugOutput.WriteLine();
             }
 
             _stream.Seek(0, SeekOrigin.Begin);
@@ -1256,6 +1276,30 @@ namespace TinyClient
         public static bool SameString(string first, string second)
         {
             return string.Compare(first, second, true, CultureInfo.CurrentCulture) == 0;
+        }
+
+        public static void DumpBytes(TextWriter writer, byte[] buffer)
+        {
+            for (int offset = 0; offset < buffer.Length; offset += 16)
+            {
+                writer.Write("{0:X6}", offset);
+                int run = Math.Min(buffer.Length - offset, 16);
+                for (int i = 0; i < run; i++)
+                {
+                    writer.Write(" {0:X2}", buffer[offset + i]);
+                }
+                writer.Write("  ");
+                for (int i = 0; i < run; i++)
+                {
+                    char c = (char)buffer[offset + i];
+                    if (c < 32 || c > 127)
+                    {
+                        c = ' ';
+                    }
+                    writer.Write(c);
+                }
+                writer.WriteLine();
+            }
         }
     }
 
