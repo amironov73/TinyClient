@@ -785,6 +785,8 @@ namespace TinyClient
 
         public TextWriter DebugOutput { get; set; }
 
+        public bool Connected { get { return _connected; } }
+
         public IrbisClient()
         {
             Host = IPAddress.Loopback;
@@ -794,6 +796,8 @@ namespace TinyClient
             ClientID = new Random().Next(100000, 900000);
             QueryID = 0;
         }
+
+        private bool _connected;
 
         private Response ExecuteQuery(Query query)
         {
@@ -816,6 +820,10 @@ namespace TinyClient
 
         public string[] Connect()
         {
+            if (Connected)
+            {
+                return new string[0];
+            }
             Query query = new Query(this, "A");
             query.AddAnsi(Username);
             query.AddAnsiNoLF(Password);
@@ -823,14 +831,19 @@ namespace TinyClient
             response.CheckReturnCode();
             response.ReadAnsi();
             response.ReadAnsi();
+            _connected = true;
             return response.ReadRemainingAnsiLines();
         }
 
         public void Dispose()
         {
-            Query query = new Query(this, "B");
-            query.AddAnsiNoLF(Username);
-            ExecuteQuery(query);
+            if (Connected)
+            {
+                Query query = new Query(this, "B");
+                query.AddAnsiNoLF(Username);
+                ExecuteQuery(query);
+                _connected = false;
+            }
         }
 
         public string FormatRecord(string format, int mfn)
@@ -962,8 +975,13 @@ namespace TinyClient
 
         public MarcRecord WriteRecord(MarcRecord record)
         {
+            string database = record.Database;
+            if (string.IsNullOrEmpty(database))
+            {
+                database = Database;
+            }
             Query query = new Query(this, "D");
-            query.AddAnsi(Database);
+            query.AddAnsi(database);
             query.Add(0);
             query.Add(1);
             query.AddUtf(record.Encode());

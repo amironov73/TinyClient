@@ -20,7 +20,7 @@ namespace MicroTestRunner
 {
     class Program
     {
-        static void Main()
+        static void SyncTest()
         {
             IrbisClient client = null;
             try
@@ -122,6 +122,115 @@ namespace MicroTestRunner
                     Console.WriteLine("Disconnected");
                 }
             }
+        }
+
+        static void AsyncTest()
+        {
+            IrbisClient client = null;
+            try
+            {
+                client = new IrbisClient
+                {
+                    Host = IPAddress.Parse("127.0.0.1"),
+                    Port = 6666,
+                    Username = "1",
+                    Password = "1",
+                    Database = "IBIS"
+                };
+
+                string[] iniLines = client.ConnectAsync().Result;
+                Console.WriteLine("Connected: {0} lines in INI-file", iniLines.Length);
+
+                IniFile iniFile = IniFile.Parse(iniLines);
+                Console.WriteLine("INI FILE: {0}", iniFile.Length);
+
+                DatabaseInfo[] databases = client.ListDatabasesAsync("1..DBNAM2.MNU").Result;
+                Console.WriteLine("DATABASES: {0}", databases.Length);
+                foreach (DatabaseInfo database in databases)
+                {
+                    Console.WriteLine(database);
+                }
+
+                Console.WriteLine("CURDB={0}", client.Database);
+
+                SearchScenario[] scenarios = client.LoadSearchScenarioAsync("10.IBIS.IBIS.INI").Result;
+                if (ReferenceEquals(scenarios, null))
+                {
+                    Console.WriteLine("No custom search scenarios");
+                }
+                else
+                {
+                    Console.WriteLine("Custom search scenarios: {0}", scenarios.Length);
+                }
+
+                int maxMfn = client.GetMaxMfnAsync().Result;
+                Console.WriteLine("Max MFN={0}", maxMfn);
+
+                MenuFile menu = client.LoadMenuAsync("10.IBIS.PFTW.MNU").Result;
+                Console.WriteLine("MENU: {0} entries", menu.Length);
+
+                client.NopAsync().Wait();
+                Console.WriteLine("NOP");
+
+                string brief = client.FormatRecordAsync("@brief", 1).Result;
+                Console.WriteLine("BRIEF: {0}", brief);
+
+                string full = client.FormatRecordAsync("@", 1).Result;
+                Console.WriteLine("FULL: {0}", full);
+
+                int[] found = client.SearchAsync("\"K=БЕ$\"").Result;
+                Console.WriteLine("SEARCH: {0} found", found.Length);
+                if (found.Length != 0)
+                {
+                    Console.Write(" => ");
+                    for (int i = 0; i < found.Length; i++)
+                    {
+                        if (i != 0)
+                        {
+                            Console.Write(", ");
+                        }
+                        Console.Write(found[i]);
+                    }
+                    Console.WriteLine();
+                }
+
+                TermInfo[] terms = client.ListTermsAsync("K=", 10).Result;
+                Console.WriteLine("TERMS: {0}", terms.Length);
+                foreach (TermInfo term in terms)
+                {
+                    Console.WriteLine(term);
+                }
+
+                MarcRecord record = client.ReadRecordAsync(1).Result;
+                Console.WriteLine("READ: {0}", record);
+
+                string formatted = client.FormatRecordAsync("@brief", record).Result;
+                Console.WriteLine("FORMAT: {0}", formatted);
+
+                record.Mfn = 0;
+                record.Version = 0;
+                RecordField field3000 = new RecordField("3000")
+                {
+                    Value = DateTime.Now.ToLongDateString()
+                };
+                record.Fields.Add(field3000);
+                record = client.WriteRecordAsync(record).Result;
+                Console.WriteLine("WRITE: {0}", record);
+            }
+            finally
+            {
+                if (!ReferenceEquals(client, null))
+                {
+                    client.DisposeAsync().Wait();
+                    Console.WriteLine("Disconnected");
+                }
+            }
+        }
+
+        static void Main()
+        {
+            // SyncTest();
+            AsyncTest();
         }
     }
 }
