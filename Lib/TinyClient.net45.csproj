@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncExtensions.cs" />
+    <Compile Include="LinqExtensions.cs" />
     <Compile Include="TinyClient.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -1296,6 +1296,35 @@ namespace TinyClient
             return string.Compare(first, second, true, CultureInfo.CurrentCulture) == 0;
         }
 
+        public static bool SameChar(char first, char second)
+        {
+            return Char.ToUpper(first) == Char.ToUpper(second);
+        }
+
+        public static bool OneOf(char c1, params char[] array)
+        {
+            foreach (char c2 in array)
+            {
+                if (SameChar(c1, c2))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool OneOf(string c1, params string[] array)
+        {
+            foreach (string c2 in array)
+            {
+                if (SameString(c1, c2))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static void DumpBytes(TextWriter writer, byte[] buffer)
         {
             for (int offset = 0; offset < buffer.Length; offset += 16)
