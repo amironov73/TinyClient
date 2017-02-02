@@ -888,7 +888,7 @@ namespace TinyClient
         {
             Query query = new Query(this, "H");
             query.AddAnsi(Database);
-            query.AddAnsi(start);
+            query.AddUtf(start);
             query.Add(count);
             Response response = ExecuteQuery(query);
             response.CheckReturnCode(-202, -203, -204);
