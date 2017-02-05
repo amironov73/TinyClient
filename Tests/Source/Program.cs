@@ -32,7 +32,7 @@ namespace MicroTestRunner
                     Username = "1",
                     Password = "1",
                     Database = "IBIS",
-                    DebugOutput = Console.Out
+                    //DebugOutput = Console.Out
                 };
 
                 string[] iniLines = client.Connect();
@@ -229,8 +229,8 @@ namespace MicroTestRunner
 
         static void Main()
         {
-            // SyncTest();
-            AsyncTest();
+            SyncTest();
+            //AsyncTest();
         }
     }
 }
