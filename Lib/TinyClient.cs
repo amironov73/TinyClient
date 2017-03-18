@@ -982,7 +982,11 @@ namespace TinyClient
         {
             using (TcpClient connection = new TcpClient())
             {
+#if NETCORE
+                connection.ConnectAsync(Host, Port).Wait();
+#else
                 connection.Connect(Host, Port);
+#endif
                 byte[] data = query.Encode();
                 if (!ReferenceEquals(DebugOutput, null))
                 {
@@ -1602,8 +1606,13 @@ namespace TinyClient
 
         public static bool SameString(string first, string second)
         {
+#if NETCORE
+            return string.Compare(first, second,
+                StringComparison.CurrentCultureIgnoreCase) == 0;
+#else
             return string.Compare(first, second, true,
                 CultureInfo.CurrentCulture) == 0;
+#endif
         }
 
         public static bool SameChar(char first, char second)
