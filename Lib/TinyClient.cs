@@ -19,6 +19,16 @@ using System.Text;
 
 #endregion
 
+#region ReSharper warnings
+
+// ReSharper disable ConvertToAutoProperty
+// ReSharper disable InconsistentNaming
+// ReSharper disable StringIndexOfIsCultureSpecific.2
+// ReSharper disable UseObjectOrCollectionInitializer
+// ReSharper disable HeapView.ObjectAllocation.Evident
+
+#endregion
+
 namespace TinyClient
 {
     public sealed class SubField
@@ -37,7 +47,8 @@ namespace TinyClient
                 string text = value;
                 if (!Utility.IsNullOrEmpty(text))
                 {
-                    text = Utility.ReplaceControlChars(text, ' ').Trim();
+                    text = Utility.ReplaceControlChars(text, ' ')
+                        .Trim();
                 }
                 _value = text;
             }
@@ -114,7 +125,8 @@ namespace TinyClient
                 string text = value;
                 if (!Utility.IsNullOrEmpty(text))
                 {
-                    text = Utility.ReplaceControlChars(text, ' ').Trim();
+                    text = Utility.ReplaceControlChars(text, ' ')
+                        .Trim();
                 }
                 _value = text;
             }
@@ -136,7 +148,8 @@ namespace TinyClient
         internal static RecordField Parse(string line)
         {
             StringReader reader = new StringReader(line);
-            RecordField result = new RecordField(Utility.ReadTo(reader, '#'));
+            RecordField result
+                = new RecordField(Utility.ReadTo(reader, '#'));
             result.Value = Utility.ReadTo(reader, '^');
             while (true)
             {
@@ -257,20 +270,22 @@ namespace TinyClient
             _fields = new FieldCollection();
         }
 
-        internal static void ParseOneOfMany(MarcRecord record, string text)
+        internal static void ParseOneOfMany(MarcRecord record,
+            string text)
         {
             record.Fields.Clear();
             string[] delimiters = new string[1];
             delimiters[0] = Utility.ShortDelimiter;
-            string[] lines = text.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            string[] lines = Utility.SplitString(delimiters, text);
             ParseSingle(record, lines);
         }
 
-        internal static void ParseSingle(MarcRecord record, string[] text)
+        internal static void ParseSingle(MarcRecord record,
+            string[] text)
         {
             char[] delimiters = { '#' };
             string line = text[0];
-            string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            string[] parts = Utility.SplitString(delimiters, line);
             record.Mfn = int.Parse(parts[0]);
             if (parts.Length != 1)
             {
@@ -622,7 +637,8 @@ namespace TinyClient
             return null;
         }
 
-        public string GetValue(string sectionName, string key, string defaultValue)
+        public string GetValue(string sectionName,
+            string key, string defaultValue)
         {
             IniSection section = GetSection(sectionName);
             if (ReferenceEquals(section, null))
@@ -674,7 +690,8 @@ namespace TinyClient
             return result;
         }
 
-        public void SetValue(string sectionName, string key, string value)
+        public void SetValue(string sectionName, string key,
+            string value)
         {
             IniSection section = GetSection(sectionName);
             if (ReferenceEquals(section, null))
@@ -766,9 +783,9 @@ namespace TinyClient
             set { _format = value; }
         }
 
-        private string _name, _prefix, _dictionaryType, _menuName,
-            _oldFormat, _correction, _truncation, _hint, _modByDicAuto,
-            _logic, _advance, _format;
+        private string _name, _prefix, _dictionaryType,
+            _menuName, _oldFormat, _correction, _truncation,
+            _hint, _modByDicAuto, _logic, _advance, _format;
 
         public static SearchScenario[] ParseIniFile(IniFile iniFile)
         {
@@ -793,18 +810,21 @@ namespace TinyClient
                 SearchScenario scenario = new SearchScenario ();
                 scenario.Name = name;
                 scenario.Prefix = section["ItemPref" + i];
-                scenario.DictionaryType = section["ItemDictionType" + i];
+                scenario.DictionaryType 
+                    = section["ItemDictionType" + i];
                 scenario.Advance = section["ItemAdv" + i];
                 scenario.Format = section["ItemPft" + i];
                 scenario.Hint = section["ItemHint" + i];
                 scenario.Logic = section["ItemLogic" + i];
                 scenario.MenuName = section["ItemMenu" + i];
-                scenario.ModByDicAuto = section["ItemModByDicAuto" + i];
+                scenario.ModByDicAuto
+                    = section["ItemModByDicAuto" + i];
                 scenario.Correction = section["ModByDic" + i];
                 scenario.Truncation = section["ItemTranc" + i];
                 list.Add(scenario);
             }
-            SearchScenario[] result = new SearchScenario[list.Count];
+            SearchScenario[] result 
+                = new SearchScenario[list.Count];
             list.CopyTo(result);
             return result;
         }
@@ -849,7 +869,8 @@ namespace TinyClient
             return result;
         }
 
-        public static TermInfo[] TrimPrefix(TermInfo[] terms, string prefix)
+        public static TermInfo[] TrimPrefix(TermInfo[] terms,
+            string prefix)
         {
             if (Utility.IsNullOrEmpty(prefix))
             {
@@ -970,9 +991,9 @@ namespace TinyClient
                     Utility.DumpBytes(DebugOutput, data);
                     DebugOutput.WriteLine();
                 }
-                Socket socket = connection.Client;
-                socket.Send(data);
-                return new Response(this, socket);
+                NetworkStream stream = connection.GetStream();
+                stream.Write(data, 0, data.Length);
+                return new Response(this, stream);
             }
         }
 
@@ -1016,7 +1037,8 @@ namespace TinyClient
             return response.ReadRemainingUtfText().Trim();
         }
 
-        public string FormatRecord(string format, MarcRecord record)
+        public string FormatRecord(string format,
+            MarcRecord record)
         {
             Query query = new Query(this, "G");
             query.AddAnsi(Database);
@@ -1061,13 +1083,15 @@ namespace TinyClient
 
         public IniFile LoadIniFile(string fileName)
         {
-            string[] lines = Utility.SplitIrbisLines(ReadTextFile(fileName));
+            string[] lines 
+                = Utility.SplitIrbisLines(ReadTextFile(fileName));
             return IniFile.Parse(lines);
         }
 
         public SearchScenario[] LoadSearchScenario(string fileName)
         {
-            string[] lines = Utility.SplitIrbisLines(ReadTextFile(fileName));
+            string[] lines
+                = Utility.SplitIrbisLines(ReadTextFile(fileName));
             if (lines.Length == 0)
             {
                 return null;
@@ -1120,13 +1144,15 @@ namespace TinyClient
             query.Add(1);
             Response response = ExecuteQuery(query);
             response.CheckReturnCode();
-            int howMany = Math.Min(response.ReadInt32(), maxPacket);
+            int howMany
+                = Math.Min(response.ReadInt32(), maxPacket);
             int[] result = new int[howMany];
             char[] delimiters = { '#' };
             for (int i = 0; i < howMany; i++)
             {
                 string line = response.ReadAnsi();
-                string[] parts = line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+                string[] parts
+                    = Utility.SplitString(delimiters, line);
                 int mfn = int.Parse(parts[0]);
                 result[i] = mfn;
             }
@@ -1149,7 +1175,8 @@ namespace TinyClient
             response.CheckReturnCode(-201, -600, -602, -603);
             string line1 = response.ReadUtf();
             string line2 = response.ReadUtf();
-            MarcRecord.ParseOneOfMany(record, line1 + Utility.ShortDelimiter + line2);
+            MarcRecord.ParseOneOfMany(record, 
+                line1 + Utility.ShortDelimiter + line2);
             record.Database = Database;
             return record;
         }
@@ -1183,7 +1210,8 @@ namespace TinyClient
 
         public void Add(int value)
         {
-            string text = value.ToString(CultureInfo.InvariantCulture);
+            string text
+                = value.ToString(CultureInfo.InvariantCulture);
             AddAnsi(text);
         }
 
@@ -1225,9 +1253,11 @@ namespace TinyClient
                     buffer.Length.ToString(CultureInfo.InvariantCulture)
                     + "\n"
                 );
-            byte[] result = new byte[prefix.Length + buffer.Length];
+            byte[] result
+                = new byte[prefix.Length + buffer.Length];
             Array.Copy(prefix, result, prefix.Length);
-            Array.Copy(buffer, 0, result, prefix.Length, buffer.Length);
+            Array.Copy(buffer, 0, result, prefix.Length,
+                buffer.Length);
 
             return result;
         }
@@ -1266,14 +1296,14 @@ namespace TinyClient
         private string _command;
         private int _clientID, _queryID, _returnCode;
 
-        public Response(IrbisClient client, Socket socket)
+        public Response(IrbisClient client, NetworkStream network)
         {
             _stream = new MemoryStream();
 
             byte[] buffer = new byte[32 * 1024];
             while (true)
             {
-                int read = socket.Receive(buffer);
+                int read = network.Read(buffer, 0, buffer.Length);
                 if (read <= 0)
                 {
                     break;
@@ -1283,9 +1313,11 @@ namespace TinyClient
 
             if (!ReferenceEquals(client.DebugOutput, null))
             {
-                client.DebugOutput.WriteLine("RESPONSE {0}:", client.QueryID);
+                client.DebugOutput.WriteLine("RESPONSE {0}:",
+                    client.QueryID);
                 client.DebugOutput.WriteLine();
-                Utility.DumpBytes(client.DebugOutput, _stream.ToArray());
+                Utility.DumpBytes(client.DebugOutput,
+                    _stream.ToArray());
                 client.DebugOutput.WriteLine();
             }
 
@@ -1354,7 +1386,7 @@ namespace TinyClient
         {
             string text = ReadAnsi();
             int result;
-            int.TryParse(text, out result);
+            Utility.TryParse(text, out result);
             return result;
         }
 
@@ -1387,7 +1419,7 @@ namespace TinyClient
         public string ReadRemainingUtfText()
         {
             MemoryStream buffer = new MemoryStream();
-            _stream.CopyTo(buffer);
+            Utility.CopyTo(_stream, buffer);
             return Utility.Utf.GetString(buffer.ToArray());
         }
 
@@ -1400,8 +1432,10 @@ namespace TinyClient
 
     public sealed class Utility
     {
-        private static readonly Encoding _utf8 = new UTF8Encoding(false, false);
-        private static readonly Encoding _cp1251 = Encoding.GetEncoding(1251);
+        private static readonly Encoding _utf8
+            = new UTF8Encoding(false, false);
+        private static readonly Encoding _cp1251
+            = Encoding.GetEncoding(1251);
 
         public static Encoding Utf { get { return _utf8; } }
         public static Encoding Ansi { get { return _cp1251; } }
@@ -1443,9 +1477,10 @@ namespace TinyClient
             return result.ToString();
         }
 
-        public static string ReplaceControlChars(string text, char substitute)
+        public static string ReplaceControlChars(string text,
+            char substitute)
         {
-            if (Utility.IsNullOrEmpty(text))
+            if (IsNullOrEmpty(text))
             {
                 return text;
             }
@@ -1462,7 +1497,8 @@ namespace TinyClient
             {
                 return text;
             }
-            StringBuilder result = new StringBuilder(text.Length);
+            StringBuilder result
+                = new StringBuilder(text.Length);
             foreach (char c in text)
             {
                 result.Append(c < ' ' ? substitute : c);
@@ -1470,16 +1506,104 @@ namespace TinyClient
             return result.ToString();
         }
 
+        public static string[] SplitString(char[] delimiters,
+            string text)
+        {
+            ArrayList list = new ArrayList();
+            int startIndex = 0;
+            int length = text.Length;
+            while (startIndex < length)
+            {
+                int found = -1;
+
+                foreach (char c in delimiters)
+                {
+                    int pos = text.IndexOf(c, startIndex);
+                    if (pos >= 0)
+                    {
+                        found = pos;
+                        break;
+                    }
+                }
+                if (found >= 0)
+                {
+                    int segment = found - startIndex;
+                    if (segment != 0)
+                    {
+                        string s = text.Substring(startIndex,
+                            segment);
+                        list.Add(s);
+                    }
+                    startIndex = found + 1;
+                }
+                else
+                {
+                    string s = text.Substring(startIndex,
+                        length - startIndex);
+                    list.Add(s);
+                    break;
+                }
+            }
+            string[] result = new string[list.Count];
+            list.CopyTo(result);
+            return result;
+        }
+
+        public static string[] SplitString(string[] delimiters,
+            string text)
+        {
+            ArrayList list = new ArrayList();
+            int startIndex = 0;
+            int length = text.Length;
+            while (startIndex < length)
+            {
+                int found = -1;
+                int delimiterLength = 0;
+                foreach (string s in delimiters)
+                {
+                    int pos = text.IndexOf(s, startIndex);
+                    if (pos >= 0)
+                    {
+                        found = pos;
+                        delimiterLength = s.Length;
+                        break;
+                    }
+                }
+                if (found >= 0)
+                {
+                    int segment = found - startIndex;
+                    if (segment != 0)
+                    {
+                        string s = text.Substring(startIndex,
+                            segment);
+                        list.Add(s);
+                    }
+                    startIndex = found + delimiterLength;
+                }
+                else
+                {
+                    string s = text.Substring(startIndex,
+                        length - startIndex);
+                    list.Add(s);
+                    break;
+                }
+            }
+            string[] result = new string[list.Count];
+            list.CopyTo(result);
+            return result;
+        }
+
         public static string[] SplitIrbisLines(string text)
         {
             string[] delimiters = new string[1];
             delimiters[0] = IrbisDelimiter;
-            return text.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            return SplitString(delimiters, text);
         }
 
         public static bool SameString(string first, string second)
         {
-            return string.Compare(first, second, true, CultureInfo.CurrentCulture) == 0;
+            return string.Compare(first, second, true,
+                CultureInfo.CurrentCulture) == 0;
         }
 
         public static bool SameChar(char first, char second)
@@ -1511,9 +1635,39 @@ namespace TinyClient
             return false;
         }
 
-        public static void DumpBytes(TextWriter writer, byte[] buffer)
+        public static bool TryParse(string text, out int value)
         {
-            for (int offset = 0; offset < buffer.Length; offset += 16)
+            value = 0;
+            try
+            {
+                value = int.Parse(text);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static void CopyTo(Stream source, Stream destination)
+        {
+            byte[] buffer = new byte[1024];
+            while (true)
+            {
+                int readed = source.Read(buffer, 0, buffer.Length);
+                if (readed <= 0)
+                {
+                    break;
+                }
+                destination.Write(buffer, 0, readed);
+            }
+        }
+
+        public static void DumpBytes(TextWriter writer,
+            byte[] buffer)
+        {
+            for (int offset = 0; offset < buffer.Length;
+                offset += 16)
             {
                 writer.Write("{0:X6}", offset);
                 int run = Math.Min(buffer.Length - offset, 16);
@@ -1571,7 +1725,8 @@ namespace TinyClient
             string text = base.ToString();
             if (ErrorCode != 0)
             {
-                return string.Format("IRBIS exception. ErrorCode: {0}{1}{2}",
+                return string.Format(
+                    "IRBIS exception. ErrorCode: {0}{1}{2}",
                     ErrorCode, Environment.NewLine, text);
             }
             return text;
