@@ -1,0 +1,28 @@
+version: 1.0.3.{build}
+configuration: Debug
+image: Visual Studio 2015
+
+init:
+  - git config --global core.autocrlf true
+
+nuget:
+  account_feed: false
+  project_feed: false
+
+before_build:
+- cmd: nuget restore TinyClient.net45.sln
+
+build:
+  project: TinyClient.net45.sln
+  publish_nuget: false
+  parallel: true
+  verbosity: minimal
+
+after_build:
+- cmd: compilecore.cmd
+
+artifacts:
+  - path: Lib\bin\Debug\
+    name: TinyClient.45
+  - path: NetCore\TinyClient\bin\Debug\netstandard1.4
+    name: TinyClient.netcore
