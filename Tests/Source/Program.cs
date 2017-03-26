@@ -108,7 +108,7 @@ namespace MicroTestRunner
                 record.Version = 0;
                 RecordField field3000 = new RecordField("3000")
                 {
-                    Value = DateTime.Now.ToLongDateString()
+                    Value = DateTime.Now.ToString()
                 };
                 record.Fields.Add(field3000);
                 record = client.WriteRecord(record);
@@ -211,7 +211,7 @@ namespace MicroTestRunner
                 record.Version = 0;
                 RecordField field3000 = new RecordField("3000")
                 {
-                    Value = DateTime.Now.ToLongDateString()
+                    Value = DateTime.Now.ToString()
                 };
                 record.Fields.Add(field3000);
                 record = client.WriteRecordAsync(record).Result;

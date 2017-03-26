@@ -8,6 +8,8 @@
   <ItemGroup>
     <PackageReference Include="System.Collections.NonGeneric" Version="4.3.0" />
     <Compile Include="..\..\Lib\TinyClient.cs" />
+    <Compile Include="..\..\Lib\AsyncExtensions.cs" />
+    <Compile Include="..\..\Lib\LinqExtensions.cs" />
   </ItemGroup>
 
 </Project>
