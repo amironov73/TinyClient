@@ -26,3 +26,10 @@ artifacts:
     name: TinyClient.45
   - path: NetCore\TinyClient\bin\Debug\netstandard1.4
     name: TinyClient.netcore
+deploy:
+- provider: FTP
+  host: 77.222.42.228
+  protocol: ftp
+  username: alexeymnet_ftp
+  password:
+    secure: HSLxGTbqSk/C1YrPNoBA6g==
