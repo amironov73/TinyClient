@@ -13,6 +13,7 @@ Now supports
 
 - [Source code repository](https://github.com/amironov73/TinyClient);
 - [Builds with artifacts on AppVeyor](https://ci.appveyor.com/project/AlexeyMironov/tinyclient);
+- [Builds on Travis](https://travis-ci.org/amironov73/TinyClient).
 
 ### Build status
 
