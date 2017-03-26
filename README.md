@@ -7,7 +7,7 @@ popular russian library computer system IRBIS64 ("ИРБИС64").
 
 Now supports
 - Classic desktop .NET Framework from 1.1 to 4.6
-- .NET Core 1.0 (Net Standard 1.6)
+- .NET Core 1.0 (Net Standard 1.4)
 
 ### Links
 
