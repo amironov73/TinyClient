@@ -37,6 +37,7 @@
   <ItemGroup>
     <Compile Include="AsyncExtensions.cs" />
     <Compile Include="LinqExtensions.cs" />
+    <Compile Include="RetryExtensions.cs" />
     <Compile Include="TinyClient.cs" />
   </ItemGroup>
   <ItemGroup />
