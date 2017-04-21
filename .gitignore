@@ -289,3 +289,7 @@ PortabilityAnalysis*.html
 *.ps
 *.eps
 *.synctex.gz
+
+# Coverity scan working files
+cov-int
+cov-int.*
