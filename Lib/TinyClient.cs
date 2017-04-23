@@ -33,9 +33,9 @@ namespace TinyClient
 {
     public sealed class SubField
     {
-        public char Code 
-        { 
-            get { return _code; } 
+        public char Code
+        {
+            get { return _code; }
             set { _code = value; }
         }
 
@@ -111,7 +111,7 @@ namespace TinyClient
     {
         private readonly SubFieldCollection _subFields;
 
-        public string Tag 
+        public string Tag
         {
             get { return _tag; }
             set { _tag = value; }
@@ -238,25 +238,25 @@ namespace TinyClient
             get { return _fields; }
         }
 
-        public int Mfn 
-        { 
-            get { return _mfn; } 
+        public int Mfn
+        {
+            get { return _mfn; }
             set { _mfn = value; }
         }
 
-        public int Status 
+        public int Status
         {
             get { return _status; }
             set { _status = value; }
         }
 
-        public int Version 
+        public int Version
         {
             get { return _version; }
             set { _version = value; }
         }
 
-        public string Database 
+        public string Database
         {
             get { return _database; }
             set { _database = value; }
@@ -332,14 +332,14 @@ namespace TinyClient
 
     public sealed class DatabaseInfo
     {
-        public string Name 
+        public string Name
         {
             get { return _name; }
             set { _name = value; }
         }
 
-        public string Description 
-        { 
+        public string Description
+        {
             get { return _description; }
             set { _description = value; }
         }
@@ -381,14 +381,14 @@ namespace TinyClient
 
     public sealed class MenuEntry
     {
-        public string Code 
+        public string Code
         {
             get { return _code; }
             set { _code = value; }
         }
 
-        public string Comment 
-        { 
+        public string Comment
+        {
             get { return _comment; }
             set { _comment = value; }
         }
@@ -468,14 +468,14 @@ namespace TinyClient
 
     public sealed class IniLine
     {
-        public string Key 
+        public string Key
         {
             get { return _key; }
             set { _key = value; }
         }
 
-        public string Value 
-        { 
+        public string Value
+        {
             get { return _value; }
             set { _value = value; }
         }
@@ -510,8 +510,8 @@ namespace TinyClient
 
         public int Length { get { return _lines.Count; } }
 
-        public string Name 
-        { 
+        public string Name
+        {
             get { return _name; }
             set { _name = value; }
         }
@@ -711,74 +711,74 @@ namespace TinyClient
 
     public sealed class SearchScenario
     {
-        public string Name 
-        { 
+        public string Name
+        {
             get { return _name; }
             set { _name = value; }
         }
 
-        public string Prefix 
-        { 
+        public string Prefix
+        {
             get { return _prefix; }
             set { _prefix = value; }
         }
 
-        public string DictionaryType 
+        public string DictionaryType
         {
             get { return _dictionaryType; }
             set { _dictionaryType = value; }
         }
 
-        public string MenuName 
-        { 
+        public string MenuName
+        {
             get { return _menuName; }
             set { _menuName = value; }
         }
 
-        public string OldFormat 
-        { 
+        public string OldFormat
+        {
             get { return _oldFormat; }
             set { _oldFormat = value; }
         }
 
-        public string Correction 
-        { 
+        public string Correction
+        {
             get { return _correction; }
             set { _correction = value; }
         }
 
-        public string Truncation 
-        { 
+        public string Truncation
+        {
             get { return _truncation; }
             set { _truncation = value; }
         }
 
-        public string Hint 
-        { 
+        public string Hint
+        {
             get { return _hint; }
             set { _hint = value; }
         }
 
-        public string ModByDicAuto 
-        { 
+        public string ModByDicAuto
+        {
             get { return _modByDicAuto; }
             set { _modByDicAuto = value; }
         }
 
-        public string Logic 
-        { 
+        public string Logic
+        {
             get { return _logic; }
             set { _logic = value; }
         }
 
-        public string Advance 
-        { 
+        public string Advance
+        {
             get { return _advance; }
             set { _advance = value; }
         }
 
-        public string Format 
-        { 
+        public string Format
+        {
             get { return _format; }
             set { _format = value; }
         }
@@ -807,10 +807,10 @@ namespace TinyClient
                 {
                     continue;
                 }
-                SearchScenario scenario = new SearchScenario ();
+                SearchScenario scenario = new SearchScenario();
                 scenario.Name = name;
                 scenario.Prefix = section["ItemPref" + i];
-                scenario.DictionaryType 
+                scenario.DictionaryType
                     = section["ItemDictionType" + i];
                 scenario.Advance = section["ItemAdv" + i];
                 scenario.Format = section["ItemPft" + i];
@@ -823,7 +823,7 @@ namespace TinyClient
                 scenario.Truncation = section["ItemTranc" + i];
                 list.Add(scenario);
             }
-            SearchScenario[] result 
+            SearchScenario[] result
                 = new SearchScenario[list.Count];
             list.CopyTo(result);
             return result;
@@ -837,14 +837,14 @@ namespace TinyClient
 
     public sealed class TermInfo
     {
-        public int Count 
-        { 
+        public int Count
+        {
             get { return _count; }
             set { _count = value; }
         }
 
-        public string Text 
-        { 
+        public string Text
+        {
             get { return _text; }
             set { _text = value; }
         }
@@ -903,56 +903,57 @@ namespace TinyClient
     }
 
     public sealed class IrbisClient
+        : IDisposable
     {
-        public IPAddress Host 
-        { 
+        public IPAddress Host
+        {
             get { return _host; }
             set { _host = value; }
         }
 
-        public int Port 
-        { 
+        public int Port
+        {
             get { return _port; }
             set { _port = value; }
         }
 
-        public string Username 
-        { 
+        public string Username
+        {
             get { return _username; }
             set { _username = value; }
         }
 
-        public string Password 
-        { 
+        public string Password
+        {
             get { return _password; }
             set { _password = value; }
         }
 
-        public char Workstation 
-        { 
+        public char Workstation
+        {
             get { return _workstation; }
             set { _workstation = value; }
         }
 
-        public string Database 
-        { 
+        public string Database
+        {
             get { return _database; }
             set { _database = value; }
         }
 
-        public int ClientID 
-        { 
+        public int ClientID
+        {
             get { return _clientID; }
             set { _clientID = value; }
         }
 
-        public int QueryID 
-        { 
+        public int QueryID
+        {
             get { return _queryID; }
             set { _queryID = value; }
         }
 
-        public TextWriter DebugOutput 
+        public TextWriter DebugOutput
         {
             get { return _debugOutput; }
             set { _debugOutput = value; }
@@ -1087,7 +1088,7 @@ namespace TinyClient
 
         public IniFile LoadIniFile(string fileName)
         {
-            string[] lines 
+            string[] lines
                 = Utility.SplitIrbisLines(ReadTextFile(fileName));
             return IniFile.Parse(lines);
         }
@@ -1179,7 +1180,7 @@ namespace TinyClient
             response.CheckReturnCode(-201, -600, -602, -603);
             string line1 = response.ReadUtf();
             string line2 = response.ReadUtf();
-            MarcRecord.ParseOneOfMany(record, 
+            MarcRecord.ParseOneOfMany(record,
                 line1 + Utility.ShortDelimiter + line2);
             record.Database = Database;
             return record;
@@ -1187,6 +1188,7 @@ namespace TinyClient
     }
 
     sealed class Query
+        : IDisposable
     {
         private readonly MemoryStream _stream;
 
@@ -1265,32 +1267,41 @@ namespace TinyClient
 
             return result;
         }
+
+        public void Dispose()
+        {
+            if (!ReferenceEquals(_stream, null))
+            {
+                _stream.Dispose();
+            }
+        }
     }
 
     sealed class Response
+        : IDisposable
     {
         private readonly MemoryStream _stream;
 
-        public string Command 
-        { 
+        public string Command
+        {
             get { return _command; }
             set { _command = value; }
         }
 
-        public int ClientID 
-        { 
+        public int ClientID
+        {
             get { return _clientID; }
             set { _clientID = value; }
         }
 
-        public int QueryID 
-        { 
+        public int QueryID
+        {
             get { return _queryID; }
             set { _queryID = value; }
         }
 
-        public int ReturnCode 
-        { 
+        public int ReturnCode
+        {
             get { return _returnCode; }
             set { _returnCode = value; }
         }
@@ -1349,29 +1360,31 @@ namespace TinyClient
 
         public byte[] GetLine()
         {
-            MemoryStream result = new MemoryStream();
-            while (true)
+            using (MemoryStream result = new MemoryStream())
             {
-                int one = _stream.ReadByte();
-                if (one < 0)
+                while (true)
                 {
-                    break;
-                }
-                if (one == 0x0D)
-                {
-                    one = _stream.ReadByte();
-                    if (one == 0x0A)
+                    int one = _stream.ReadByte();
+                    if (one < 0)
                     {
                         break;
                     }
+                    if (one == 0x0D)
+                    {
+                        one = _stream.ReadByte();
+                        if (one == 0x0A)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        result.WriteByte((byte)one);
+                    }
                 }
-                else
-                {
-                    result.WriteByte((byte)one);
-                }
-            }
 
-            return result.ToArray();
+                return result.ToArray();
+            }
         }
 
         public int GetReturnCode()
@@ -1431,6 +1444,14 @@ namespace TinyClient
         {
             byte[] line = GetLine();
             return Utility.Utf.GetString(line);
+        }
+
+        public void Dispose()
+        {
+            if (!ReferenceEquals(_stream, null))
+            {
+                _stream.Dispose();
+            }
         }
     }
 
@@ -1701,8 +1722,8 @@ namespace TinyClient
 
     public sealed class IrbisException : Exception
     {
-        public int ErrorCode 
-        { 
+        public int ErrorCode
+        {
             get { return _errorCode; }
             set { _errorCode = value; }
         }
