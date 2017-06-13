@@ -21,3 +21,4 @@ Now supports
 [![Build status](https://img.shields.io/appveyor/ci/AlexeyMironov/tinyclient.svg)](https://ci.appveyor.com/project/AlexeyMironov/tinyclient/)
 [![Build status](https://api.travis-ci.org/amironov73/TinyClient.svg)](https://travis-ci.org/amironov73/TinyClient/)
 [![Coverity](https://img.shields.io/coverity/scan/12188.svg)](https://scan.coverity.com/projects/amironov73-tinyclient)
+[![BCH compliance](https://bettercodehub.com/edge/badge/amironov73/TinyClient?branch=master)](https://bettercodehub.com/)
