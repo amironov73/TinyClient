@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
 #endregion
@@ -19,39 +20,361 @@ namespace TinyClient
 {
     public static class LinqExtensions
     {
-        public static T GetOccurrence<T>
+        public static readonly RecordField[] EmptyFieldArray
+            = new RecordField[0];
+
+        public static readonly SubField[] EmptySubFieldArray
+            = new SubField[0];
+
+        public static readonly string[] EmptyStringArray
+            = new string[0];
+
+        // ==========================================================
+
+        public static RecordField AddSubField
             (
-                this T[] array,
+                this RecordField field,
+                char code,
+                string value
+            )
+        {
+            SubField subField = new SubField { Code = code, Value = value };
+            field.SubFields.Add(subField);
+
+            return field;
+        }
+
+        public static RecordField AddNonEmptySubField
+            (
+                this RecordField field,
+                char code,
+                string value
+            )
+        {
+            if (!string.IsNullOrEmpty(value))
+            {
+                field.AddSubField(code, value);
+            }
+
+            return field;
+        }
+
+        // ==========================================================
+
+        public static SubField[] AllSubFields
+            (
+                this IEnumerable fields
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .SelectMany(field => field.SubFields.Cast<SubField>())
+                .ToArray();
+        }
+
+        // ==========================================================
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                string tag
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => Utility.SameString(field.Tag, tag))
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this FieldCollection fields,
+                string tag
+            )
+        {
+            int count = fields.Length;
+            List<RecordField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (fields[i].Tag == tag)
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<RecordField>();
+                    }
+                    result.Add(fields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptyFieldArray
+                : result.ToArray();
+        }
+
+        public static RecordField GetField
+            (
+                this IEnumerable fields,
+                string tag,
                 int occurrence
             )
         {
-            occurrence = (occurrence >= 0)
-                            ? occurrence
-                            : array.Length + occurrence;
-            T result = default(T);
-            if ((occurrence >= 0) && (occurrence < array.Length))
+            return fields
+                .Cast<RecordField>()
+                .GetField(tag)
+                .GetOccurrence(occurrence);
+        }
+
+        public static RecordField GetField
+            (
+                this FieldCollection fields,
+                string tag,
+                int occurrence
+            )
+        {
+            int count = fields.Length;
+            for (int i = 0; i < count; i++)
             {
-                result = array[occurrence];
+                if (fields[i].Tag == tag)
+                {
+                    if (occurrence == 0)
+                    {
+                        return fields[i];
+                    }
+                    occurrence--;
+                }
+            }
+
+            return null;
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                params string[] tags
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => Utility.OneOf(field.Tag, tags))
+                .ToArray();
+        }
+
+        public static RecordField[] GeField
+            (
+                this FieldCollection fields,
+                params string[] tags
+            )
+        {
+            int count = fields.Length;
+            List<RecordField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.OneOf(fields[i].Tag, tags))
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<RecordField>();
+                    }
+                    result.Add(fields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptyFieldArray
+                : result.ToArray();
+        }
+
+        public static RecordField GetField
+            (
+                this IEnumerable fields,
+                string[] tags,
+                int occurrence
+            )
+        {
+            return fields
+                .GetField(tags)
+                .GetOccurrence(occurrence);
+        }
+
+        public static RecordField GetField
+            (
+                this FieldCollection fields,
+                string[] tags,
+                int occurrence
+            )
+        {
+            int count = fields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.OneOf(fields[i].Tag, tags))
+                {
+                    if (occurrence == 0)
+                    {
+                        return fields[i];
+                    }
+                    occurrence--;
+                }
+            }
+
+            return null;
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                Func<RecordField, bool> predicate
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(predicate)
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                Action<RecordField> action
+            )
+        {
+            RecordField[] result = fields.Cast<RecordField>().ToArray();
+            if (!ReferenceEquals(action, null))
+            {
+                foreach (RecordField field in result)
+                {
+                    action(field);
+                }
+            }
+
+            return result;
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                Action<RecordField> fieldAction,
+                Action<SubField> subFieldAction
+            )
+        {
+            RecordField[] result = fields.Cast<RecordField>().ToArray();
+            if (!ReferenceEquals(fieldAction, null)
+                || !ReferenceEquals(subFieldAction, null))
+            {
+                foreach (RecordField field in result)
+                {
+                    if (!ReferenceEquals(fieldAction, null))
+                    {
+                        fieldAction(field);
+                    }
+                    if (!ReferenceEquals(subFieldAction, null))
+                    {
+                        foreach (SubField subField in field.SubFields)
+                        {
+                            subFieldAction(subField);
+                        }
+                    }
+                }
             }
             return result;
         }
 
-        public static T GetOccurrence<T>
+        public static RecordField[] GetField
             (
-                this IList list,
-                int occurrence
+                this IEnumerable fields,
+                Action<SubField> action
             )
         {
-            occurrence = (occurrence >= 0)
-                            ? occurrence
-                            : list.Count + occurrence;
-            T result = default(T);
-            if ((occurrence >= 0) && (occurrence < list.Count))
+            RecordField[] result = fields.Cast<RecordField>().ToArray();
+            if (!ReferenceEquals(action, null))
             {
-                result = (T)list[occurrence];
+                foreach (RecordField field in result)
+                {
+                    foreach (SubField subField in field.SubFields)
+                    {
+                        action(subField);
+                    }
+                }
             }
             return result;
         }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                Func<SubField, bool> predicate
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields.Cast<SubField>().Any(predicate))
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                char[] codes,
+                Func<SubField, bool> predicate
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields
+                    .Cast<SubField>()
+                    .Any(sub => Utility.OneOf(sub.Code, codes)
+                                && predicate(sub)))
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                char[] codes,
+                params string[] values
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields
+                    .Cast<SubField>()
+                    .Any(sub => Utility.OneOf(sub.Code, codes)
+                                && Utility.OneOf(sub.Value, values)))
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                char code,
+                string value
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields
+                    .Cast<SubField>()
+                    .Any(sub => Utility.SameChar(code, sub.Code)
+                                && Utility.SameString(value, sub.Value)))
+                .ToArray();
+        }
+
+        public static RecordField[] GetField
+            (
+                this IEnumerable fields,
+                Func<RecordField, bool> fieldPredicate,
+                Func<SubField, bool> subPredicate
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(fieldPredicate)
+                .Where(field => field.SubFields
+                .Cast<SubField>()
+                .Any(subPredicate))
+                .ToArray();
+        }
+
+        // ==========================================================
 
         public static SubField GetFirstSubField
             (
@@ -91,6 +414,44 @@ namespace TinyClient
                 );
         }
 
+        // ==========================================================
+
+        public static T GetOccurrence<T>
+            (
+                this T[] array,
+                int occurrence
+            )
+        {
+            occurrence = occurrence >= 0
+                ? occurrence
+                : array.Length + occurrence;
+            T result = default(T);
+            if (occurrence >= 0 && occurrence < array.Length)
+            {
+                result = array[occurrence];
+            }
+            return result;
+        }
+
+        public static T GetOccurrence<T>
+            (
+                this IList list,
+                int occurrence
+            )
+        {
+            occurrence = occurrence >= 0
+                ? occurrence
+                : list.Count + occurrence;
+            T result = default(T);
+            if (occurrence >= 0 && occurrence < list.Count)
+            {
+                result = (T)list[occurrence];
+            }
+            return result;
+        }
+
+        // ==========================================================
+
         public static SubField[] GetSubField
             (
                 this IEnumerable subFields,
@@ -105,6 +466,31 @@ namespace TinyClient
 
         public static SubField[] GetSubField
             (
+                this SubFieldCollection subFields,
+                char code
+            )
+        {
+            int count = subFields.Length;
+            List<SubField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.SameChar(subFields[i].Code, code))
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<SubField>();
+                    }
+                    result.Add(subFields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptySubFieldArray
+                : result.ToArray();
+        }
+
+        public static SubField[] GetSubField
+            (
                 this IEnumerable subFields,
                 params char[] codes
             )
@@ -115,25 +501,29 @@ namespace TinyClient
                 .ToArray();
         }
 
-        public static string GetSubFieldValue
+        public static SubField[] GetSubField
             (
-                this SubField subField
+                this SubFieldCollection subFields,
+                params char[] codes
             )
         {
-            return subField == null
-                       ? null
-                       : subField.Value;
-        }
+            int count = subFields.Length;
+            List<SubField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.OneOf(subFields[i].Code, codes))
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<SubField>();
+                    }
+                    result.Add(subFields[i]);
+                }
+            }
 
-        public static string[] GetSubFieldValue
-            (
-                this IEnumerable subFields
-            )
-        {
-            return subFields
-                .Cast<SubField>()
-                .Select(subField => subField.Value)
-                .ToArray();
+            return ReferenceEquals(result, null)
+                ? EmptySubFieldArray
+                : result.ToArray();
         }
 
         public static SubField[] GetSubField
@@ -152,6 +542,24 @@ namespace TinyClient
                 {
                     action(subField);
                 }
+            }
+
+            return result;
+        }
+
+        public static SubField[] GetSubField
+            (
+                this SubFieldCollection subFields,
+                Action<SubField> action
+            )
+        {
+            int count = subFields.Length;
+            SubField[] result = new SubField[count];
+            for (int i = 0; i < count; i++)
+            {
+                SubField item = subFields[i];
+                result[i] = item;
+                action(item);
             }
 
             return result;
@@ -186,65 +594,161 @@ namespace TinyClient
                 .ToArray();
         }
 
-        public static RecordField[] GetField
+        public static SubField[] GetSubField
             (
-                this IEnumerable fields,
-                string tag
+                this RecordField field,
+                char code
             )
         {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => Utility.SameString(field.Tag, tag))
-                .ToArray();
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            List<SubField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.SameChar(subFields[i].Code, code))
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<SubField>();
+                    }
+                    result.Add(subFields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptySubFieldArray
+                : result.ToArray();
         }
 
-        public static RecordField GetField
+        public static SubField GetSubField
             (
-                this IEnumerable fields,
-                string tag,
+                this RecordField field,
+                char code,
                 int occurrence
             )
         {
-            return fields
-                .Cast<RecordField>()
-                .GetField(tag)
-                .GetOccurrence(occurrence);
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.SameChar(subFields[i].Code, code))
+                {
+                    if (occurrence == 0)
+                    {
+                        return subFields[i];
+                    }
+                    occurrence--;
+                }
+            }
+
+            return null;
         }
 
-        public static RecordField[] GetField
+        // ==========================================================
+
+        public static string GetSubFieldValue
             (
-                this IEnumerable fields,
-                params string[] tags
+                this SubField subField
             )
         {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => Utility.OneOf(field.Tag, tags))
+            return subField == null
+                       ? null
+                       : subField.Value;
+        }
+
+        public static string[] GetSubFieldValue
+            (
+                this IEnumerable subFields
+            )
+        {
+            return subFields
+                .Cast<SubField>()
+                .Select(subField => subField.Value)
                 .ToArray();
         }
 
-        public static RecordField GetField
+        // ==========================================================
+
+        public static bool HaveNotSubField
             (
-                this IEnumerable fields,
-                string[] tags,
-                int occurrence
+                this RecordField field,
+                char code
             )
         {
-            return fields
-                .GetField(tags)
-                .GetOccurrence(occurrence);
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.SameChar(subFields[i].Code, code))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
-        public static RecordField[] WithNullValue
+        public static bool HaveNotSubField
             (
-                this IEnumerable fields
+                this RecordField field,
+                params char[] codes
             )
         {
-            return fields
-                .Cast<RecordField>()
-                .Where(field =>string.IsNullOrEmpty(field.Value))
-                .ToArray();
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.OneOf(subFields[i].Code, codes))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
+
+        // ==========================================================
+
+        public static bool HaveSubField
+            (
+                this RecordField field,
+                char code
+            )
+        {
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.SameChar(subFields[i].Code, code))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool HaveSubField
+            (
+                this RecordField field,
+                params char[] codes
+            )
+        {
+            SubFieldCollection subFields = field.SubFields;
+            int count = subFields.Length;
+            for (int i = 0; i < count; i++)
+            {
+                if (Utility.OneOf(subFields[i].Code, codes))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+
+        // ==========================================================
 
         public static RecordField[] NotNullValue
             (
@@ -255,51 +759,6 @@ namespace TinyClient
                 .Cast<RecordField>()
                 .Where(field => !string.IsNullOrEmpty(field.Value))
                 .ToArray();
-        }
-
-        public static RecordField[] WithSubFields
-            (
-                this IEnumerable fields
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields.Length != 0)
-                .ToArray();
-        }
-
-        public static RecordField[] WithoutSubFields
-            (
-                this IEnumerable fields
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields.Length == 0)
-                .ToArray();
-        }
-
-        public static SubField[] GetSubField
-            (
-                this RecordField field,
-                char code
-            )
-        {
-            return field.SubFields
-                .Cast<SubField>()
-                .Where(subField => Utility.SameChar(subField.Code, code))
-                .ToArray();
-        }
-
-        public static SubField GetSubField
-            (
-                this RecordField field,
-                char code,
-                int occurrence
-            )
-        {
-            return field.GetSubField(code)
-                .GetOccurrence(occurrence);
         }
 
         public static SubField GetFirstSubField
@@ -363,32 +822,6 @@ namespace TinyClient
             return field.SubFields.FilterSubFields(codes);
         }
 
-        public static RecordField AddSubField
-            (
-                this RecordField field,
-                char code,
-                string value
-            )
-        {
-            SubField subField = new SubField {Code = code, Value = value};
-            field.SubFields.Add(subField);
-            return field;
-        }
-
-        public static RecordField AddNonEmptySubField
-            (
-                this RecordField field,
-                char code,
-                string value
-            )
-        {
-            if (!string.IsNullOrEmpty(value))
-            {
-                field.AddSubField(code, value);
-            }
-            return field;
-        }
-
         public static RecordField SetSubField
             (
                 this RecordField field,
@@ -401,7 +834,7 @@ namespace TinyClient
                 .FirstOrDefault(sub => Utility.SameChar(code, sub.Code));
             if (ReferenceEquals(subField, null))
             {
-                subField = new SubField{Code = code};
+                subField = new SubField { Code = code };
                 field.SubFields.Add(subField);
             }
             subField.Value = value;
@@ -454,57 +887,13 @@ namespace TinyClient
                 string newValue
             )
         {
-            string oldValue = field.GetSubFieldValue(code,0);
+            string oldValue = field.GetSubFieldValue(code, 0);
             bool changed = !Utility.SameString(oldValue, newValue);
             if (changed)
             {
                 field.SetSubField(code, newValue);
             }
             return field;
-        }
-
-        public static bool HaveSubField
-            (
-                this RecordField field,
-                char code
-            )
-        {
-            return field.SubFields
-                .Cast<SubField>()
-                .FirstOrDefault(subField => Utility.SameChar(subField.Code, code)) != null;
-        }
-
-        public static bool HaveSubField
-            (
-                this RecordField field,
-                params char[] codes
-            )
-        {
-            return field.SubFields
-                .Cast<SubField>()
-                .FirstOrDefault(subField => Utility.OneOf(subField.Code, codes)) != null;
-        }
-
-        public static bool HaveNotSubField
-            (
-                this RecordField field,
-                char code
-            )
-        {
-            return field.SubFields
-                .Cast<SubField>()
-                .FirstOrDefault(subField => Utility.SameChar(code, subField.Code)) == null;
-        }
-
-        public static bool HaveNotSubField
-            (
-                this RecordField field,
-                params char[] codes
-            )
-        {
-            return field.SubFields
-                .Cast<SubField>()
-                .FirstOrDefault(subField => Utility.OneOf(subField.Code, codes)) == null;
         }
 
         public static string GetFieldValue
@@ -525,169 +914,6 @@ namespace TinyClient
             return fields
                 .Cast<RecordField>()
                 .Select(field => field.Value)
-                .ToArray();
-        }
-
-        public static SubField[] AllSubFields
-            (
-                this IEnumerable fields
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .SelectMany(field => field.SubFields.Cast<SubField>())
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                Func<RecordField, bool> predicate
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(predicate)
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                Action<RecordField> action
-            )
-        {
-            RecordField[] result = fields.Cast<RecordField>().ToArray();
-            if (!ReferenceEquals(action, null))
-            {
-                foreach (RecordField field in result)
-                {
-                    action(field);
-                }
-            }
-            return result;
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                Action<RecordField> fieldAction,
-                Action<SubField> subFieldAction
-            )
-        {
-            RecordField[] result = fields.Cast<RecordField>().ToArray();
-            if (!ReferenceEquals(fieldAction, null)
-                || !ReferenceEquals(subFieldAction, null))
-            {
-                foreach (RecordField field in result)
-                {
-                    if (!ReferenceEquals(fieldAction, null))
-                    {
-                        fieldAction(field);
-                    }
-                    if (!ReferenceEquals(subFieldAction, null))
-                    {
-                        foreach (SubField subField in field.SubFields)
-                        {
-                            subFieldAction(subField);
-                        }
-                    }
-                }
-            }
-            return result;
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                Action<SubField> action
-            )
-        {
-            RecordField[] result = fields.Cast<RecordField>().ToArray();
-            if (!ReferenceEquals(action, null))
-            {
-                foreach (RecordField field in result)
-                {
-                    foreach (SubField subField in field.SubFields)
-                    {
-                        action(subField);
-                    }
-                }
-            }
-            return result;
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                 Func<SubField, bool> predicate
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields.Cast<SubField>().Any(predicate))
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                char[] codes,
-                Func<SubField, bool> predicate
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields
-                    .Cast<SubField>()
-                    .Any(sub => Utility.OneOf(sub.Code, codes)
-                        && predicate(sub)))
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                char[] codes,
-                params string[] values
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields
-                    .Cast<SubField>()
-                    .Any(sub => Utility.OneOf(sub.Code, codes)
-                        && Utility.OneOf(sub.Value, values)))
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                char code,
-                string value
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(field => field.SubFields
-                    .Cast<SubField>()
-                    .Any(sub => Utility.SameChar(code, sub.Code)
-                        && Utility.SameString(value, sub.Value)))
-                .ToArray();
-        }
-
-        public static RecordField[] GetField
-            (
-                this IEnumerable fields,
-                Func<RecordField, bool> fieldPredicate,
-                Func<SubField, bool> subPredicate
-            )
-        {
-            return fields
-                .Cast<RecordField>()
-                .Where(fieldPredicate)
-                .Where(field => field.SubFields.Cast<SubField>().Any(subPredicate))
                 .ToArray();
         }
 
@@ -794,6 +1020,120 @@ namespace TinyClient
             }
 
             return null;
+        }
+
+        // ==========================================================
+
+        public static RecordField[] WithNullValue
+            (
+                this IEnumerable fields
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => string.IsNullOrEmpty(field.Value))
+                .ToArray();
+        }
+
+        public static RecordField[] WithNullValue
+            (
+                this MarcRecord record
+            )
+        {
+            FieldCollection fields = record.Fields;
+            int count = fields.Length;
+            List<RecordField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (string.IsNullOrEmpty(fields[i].Value))
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<RecordField>();
+                    }
+                    result.Add(fields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptyFieldArray
+                : result.ToArray();
+        }
+
+        // ==========================================================
+
+        public static RecordField[] WithoutSubFields
+            (
+                this IEnumerable fields
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields.Length == 0)
+                .ToArray();
+        }
+
+        public static RecordField[] WithoutSubFields
+            (
+                this MarcRecord record
+            )
+        {
+            FieldCollection fields = record.Fields;
+            int count = fields.Length;
+            List<RecordField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (fields[i].SubFields.Length == 0)
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<RecordField>();
+                    }
+                    result.Add(fields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptyFieldArray
+                : result.ToArray();
+        }
+
+        // ==========================================================
+
+        public static RecordField[] WithSubFields
+            (
+                this IEnumerable fields
+            )
+        {
+            return fields
+                .Cast<RecordField>()
+                .Where(field => field.SubFields.Length != 0)
+                .ToArray();
+        }
+
+        public static RecordField[] WithSubFields
+            (
+                this MarcRecord record
+            )
+        {
+            FieldCollection fields = record.Fields;
+            int count = fields.Length;
+            List<RecordField> result = null;
+            for (int i = 0; i < count; i++)
+            {
+                if (fields[i].SubFields.Length != 0)
+                {
+                    if (ReferenceEquals(result, null))
+                    {
+                        result = new List<RecordField>();
+                    }
+                    result.Add(fields[i]);
+                }
+            }
+
+            return ReferenceEquals(result, null)
+                ? EmptyFieldArray
+                : result.ToArray();
         }
     }
 }
