@@ -77,19 +77,19 @@ namespace TinyClient
         public static RecordField[] GetField
             (
                 this IEnumerable fields,
-                string tag
+                int tag
             )
         {
             return fields
                 .Cast<RecordField>()
-                .Where(field => Utility.SameString(field.Tag, tag))
+                .Where(field => field.Tag == tag)
                 .ToArray();
         }
 
         public static RecordField[] GetField
             (
                 this FieldCollection fields,
-                string tag
+                int tag
             )
         {
             int count = fields.Length;
@@ -114,7 +114,7 @@ namespace TinyClient
         public static RecordField GetField
             (
                 this IEnumerable fields,
-                string tag,
+                int tag,
                 int occurrence
             )
         {
@@ -127,7 +127,7 @@ namespace TinyClient
         public static RecordField GetField
             (
                 this FieldCollection fields,
-                string tag,
+                int tag,
                 int occurrence
             )
         {
@@ -150,7 +150,7 @@ namespace TinyClient
         public static RecordField[] GetField
             (
                 this IEnumerable fields,
-                params string[] tags
+                params int[] tags
             )
         {
             return fields
@@ -162,7 +162,7 @@ namespace TinyClient
         public static RecordField[] GeField
             (
                 this FieldCollection fields,
-                params string[] tags
+                params int[] tags
             )
         {
             int count = fields.Length;
@@ -187,7 +187,7 @@ namespace TinyClient
         public static RecordField GetField
             (
                 this IEnumerable fields,
-                string[] tags,
+                int[] tags,
                 int occurrence
             )
         {
@@ -199,7 +199,7 @@ namespace TinyClient
         public static RecordField GetField
             (
                 this FieldCollection fields,
-                string[] tags,
+                int[] tags,
                 int occurrence
             )
         {
@@ -583,7 +583,7 @@ namespace TinyClient
         public static SubField[] GetSubField
             (
                 this IEnumerable fields,
-                string[] tags,
+                int[] tags,
                 char[] codes
             )
         {
@@ -920,18 +920,18 @@ namespace TinyClient
         public static RecordField GetFirstField
             (
                 this IEnumerable fields,
-                string tag
+                int tag
             )
         {
             return fields
                 .Cast<RecordField>()
-                .FirstOrDefault(field => Utility.SameString(field.Tag, tag));
+                .FirstOrDefault(field => field.Tag == tag);
         }
 
         public static RecordField GetFirstField
             (
                 this IEnumerable fields,
-                params string[] tags
+                params int[] tags
             )
         {
             return fields
@@ -942,13 +942,13 @@ namespace TinyClient
         public static SubField GetFirstSubField
             (
                 this IEnumerable fields,
-                string tag,
+                int tag,
                 char code
             )
         {
             foreach (RecordField field in fields)
             {
-                if (Utility.SameString(field.Tag, tag))
+                if (field.Tag == tag)
                 {
                     foreach (SubField subField in field.SubFields)
                     {
@@ -965,12 +965,12 @@ namespace TinyClient
         public static string GetFirstFieldValue
             (
                 this IEnumerable fields,
-                string tag
+                int tag
             )
         {
             foreach (RecordField field in fields)
             {
-                if (Utility.SameString(field.Tag, tag))
+                if (field.Tag == tag)
                 {
                     return field.Value;
                 }
@@ -981,13 +981,13 @@ namespace TinyClient
         public static string[] GetFieldValue
             (
                 this IEnumerable fields,
-                string tag
+                int tag
             )
         {
             ArrayList list = new ArrayList();
             foreach (RecordField field in fields)
             {
-                if (Utility.SameString(field.Tag, tag)
+                if (field.Tag == tag
                     && !string.IsNullOrEmpty(field.Value))
                 {
                     list.Add(field.Value);
@@ -1001,13 +1001,13 @@ namespace TinyClient
         public static string GetFirstSubFieldValue
             (
                 this IEnumerable fields,
-                string tag,
+                int tag,
                 char code
             )
         {
             foreach (RecordField field in fields)
             {
-                if (Utility.SameString(field.Tag, tag))
+                if (field.Tag == tag)
                 {
                     foreach (SubField subField in field.SubFields)
                     {

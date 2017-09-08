@@ -26,6 +26,7 @@ using System.Text;
 // ReSharper disable StringIndexOfIsCultureSpecific.2
 // ReSharper disable UseObjectOrCollectionInitializer
 // ReSharper disable HeapView.ObjectAllocation.Evident
+// ReSharper disable once InlineOutVariableDeclaration
 
 #endregion
 
@@ -111,7 +112,7 @@ namespace TinyClient
     {
         private readonly SubFieldCollection _subFields;
 
-        public string Tag
+        public int Tag
         {
             get { return _tag; }
             set { _tag = value; }
@@ -132,7 +133,9 @@ namespace TinyClient
             }
         }
 
-        private string _tag, _value;
+        private int _tag;
+
+        private string _value;
 
         public SubFieldCollection SubFields
         {
@@ -140,6 +143,12 @@ namespace TinyClient
         }
 
         public RecordField(string tag)
+        {
+            Tag = int.Parse(tag);
+            _subFields = new SubFieldCollection();
+        }
+
+        public RecordField(int tag)
         {
             Tag = tag;
             _subFields = new SubFieldCollection();
@@ -1658,6 +1667,18 @@ namespace TinyClient
             foreach (string c2 in array)
             {
                 if (SameString(c1, c2))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool OneOf(int c1, params int[] array)
+        {
+            foreach (int c2 in array)
+            {
+                if (c1 == c2)
                 {
                     return true;
                 }
