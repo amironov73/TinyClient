@@ -1187,11 +1187,18 @@ namespace TinyClient
             query.AddUtf(record.Encode());
             Response response = ExecuteQuery(query);
             response.CheckReturnCode(-201, -600, -602, -603);
+            record.Database = Database;
             string line1 = response.ReadUtf();
             string line2 = response.ReadUtf();
+            if (string.IsNullOrEmpty(line1)
+                || string.IsNullOrEmpty(line2))
+            {
+                // If AUTOIN.GBL missin from the database,
+                // server returns no updated record
+                return record;
+            }
             MarcRecord.ParseOneOfMany(record,
                 line1 + Utility.ShortDelimiter + line2);
-            record.Database = Database;
             return record;
         }
     }
