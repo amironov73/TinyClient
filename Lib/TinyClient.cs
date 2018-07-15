@@ -990,25 +990,25 @@ namespace TinyClient
 
         private Response ExecuteQuery(Query query)
         {
-            using (TcpClient connection = new TcpClient())
-            {
+            TcpClient connection = new TcpClient();
 #if NETCORE
                 connection.ConnectAsync(Host, Port).Wait();
 #else
-                connection.Connect(Host, Port);
+            connection.Connect(Host, Port);
 #endif
-                byte[] data = query.Encode();
-                if (!ReferenceEquals(DebugOutput, null))
-                {
-                    DebugOutput.WriteLine("QUERY {0}:", QueryID);
-                    DebugOutput.WriteLine();
-                    Utility.DumpBytes(DebugOutput, data);
-                    DebugOutput.WriteLine();
-                }
-                NetworkStream stream = connection.GetStream();
-                stream.Write(data, 0, data.Length);
-                return new Response(this, stream);
+            byte[][] data = query.Encode();
+            if (!ReferenceEquals(DebugOutput, null))
+            {
+                DebugOutput.WriteLine("QUERY {0}:", QueryID);
+                DebugOutput.WriteLine();
+                Utility.DumpBytes(DebugOutput, data[0]);
+                Utility.DumpBytes(DebugOutput, data[1]);
+                DebugOutput.WriteLine();
             }
+            NetworkStream stream = connection.GetStream();
+            stream.Write(data[0], 0, data[0].Length);
+            stream.Write(data[1], 0, data[1].Length);
+            return new Response(this, connection, stream);
         }
 
         public string[] Connect()
@@ -1020,12 +1020,14 @@ namespace TinyClient
             Query query = new Query(this, "A");
             query.AddAnsi(Username);
             query.AddAnsiNoLF(Password);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode();
-            response.ReadAnsi();
-            response.ReadAnsi();
-            _connected = true;
-            return response.ReadRemainingAnsiLines();
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode();
+                response.ReadAnsi();
+                response.ReadAnsi();
+                _connected = true;
+                return response.ReadRemainingAnsiLines();
+            }
         }
 
         public void Dispose()
@@ -1046,9 +1048,11 @@ namespace TinyClient
             query.AddAnsi(format);
             query.Add(1);
             query.Add(mfn);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode();
-            return response.ReadRemainingUtfText().Trim();
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode();
+                return response.ReadRemainingUtfText().Trim();
+            }
         }
 
         public string FormatRecord(string format,
@@ -1059,18 +1063,22 @@ namespace TinyClient
             query.AddAnsi(format);
             query.Add(-2);
             query.AddUtf(record.Encode());
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode();
-            return response.ReadUtf().Trim();
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode();
+                return response.ReadUtf().Trim();
+            }
         }
 
         public int GetMaxMfn()
         {
             Query query = new Query(this, "O");
             query.AddAnsiNoLF(Database);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode();
-            return response.ReturnCode;
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode();
+                return response.ReturnCode;
+            }
         }
 
         public DatabaseInfo[] ListDatabases(string menuName)
@@ -1084,10 +1092,12 @@ namespace TinyClient
             query.AddAnsi(Database);
             query.AddUtf(start);
             query.Add(count);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode(-202, -203, -204);
-            string[] lines = response.ReadRemainingUtfLines();
-            return TermInfo.Parse(lines);
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode(-202, -203, -204);
+                string[] lines = response.ReadRemainingUtfLines();
+                return TermInfo.Parse(lines);
+            }
         }
 
         public MenuFile LoadMenu(string menuName)
@@ -1097,15 +1107,13 @@ namespace TinyClient
 
         public IniFile LoadIniFile(string fileName)
         {
-            string[] lines
-                = Utility.SplitIrbisLines(ReadTextFile(fileName));
+            string[] lines = Utility.SplitIrbisLines(ReadTextFile(fileName));
             return IniFile.Parse(lines);
         }
 
         public SearchScenario[] LoadSearchScenario(string fileName)
         {
-            string[] lines
-                = Utility.SplitIrbisLines(ReadTextFile(fileName));
+            string[] lines = Utility.SplitIrbisLines(ReadTextFile(fileName));
             if (lines.Length == 0)
             {
                 return null;
@@ -1122,7 +1130,10 @@ namespace TinyClient
         public void Nop()
         {
             Query query = new Query(this, "N");
-            ExecuteQuery(query);
+            using (ExecuteQuery(query))
+            {
+                // Nothing to do here
+            }
         }
 
         public MarcRecord ReadRecord(int mfn)
@@ -1130,21 +1141,25 @@ namespace TinyClient
             Query query = new Query(this, "C");
             query.AddAnsi(Database);
             query.Add(mfn);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode(-201, -600, -602, -603);
-            string[] lines = response.ReadRemainingUtfLines();
-            MarcRecord result = new MarcRecord();
-            MarcRecord.ParseSingle(result, lines);
-            result.Database = Database;
-            return result;
+            using (Response response = ExecuteQuery(query))
+            {
+                response.CheckReturnCode(-201, -600, -602, -603);
+                string[] lines = response.ReadRemainingUtfLines();
+                MarcRecord result = new MarcRecord();
+                MarcRecord.ParseSingle(result, lines);
+                result.Database = Database;
+                return result;
+            }
         }
 
         public string ReadTextFile(string specification)
         {
             Query query = new Query(this, "L");
             query.AddAnsi(specification);
-            Response response = ExecuteQuery(query);
-            return response.ReadAnsi();
+            using (Response response = ExecuteQuery(query))
+            {
+                return response.ReadAnsi();
+            }
         }
 
         public int[] Search(string expression)
@@ -1156,21 +1171,22 @@ namespace TinyClient
             query.AddUtf(expression);
             query.Add(0);
             query.Add(1);
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode();
-            int howMany
-                = Math.Min(response.ReadInt32(), maxPacket);
-            int[] result = new int[howMany];
-            char[] delimiters = { '#' };
-            for (int i = 0; i < howMany; i++)
+            using (Response response = ExecuteQuery(query))
             {
-                string line = response.ReadAnsi();
-                string[] parts
-                    = Utility.SplitString(delimiters, line);
-                int mfn = int.Parse(parts[0]);
-                result[i] = mfn;
+                response.CheckReturnCode();
+                int howMany = Math.Min(response.ReadInt32(), maxPacket);
+                int[] result = new int[howMany];
+                char[] delimiters = {'#'};
+                for (int i = 0; i < howMany; i++)
+                {
+                    string line = response.ReadAnsi();
+                    string[] parts = Utility.SplitString(delimiters, line);
+                    int mfn = int.Parse(parts[0]);
+                    result[i] = mfn;
+                }
+
+                return result;
             }
-            return result;
         }
 
         public MarcRecord WriteRecord(MarcRecord record)
@@ -1185,21 +1201,24 @@ namespace TinyClient
             query.Add(0);
             query.Add(1);
             query.AddUtf(record.Encode());
-            Response response = ExecuteQuery(query);
-            response.CheckReturnCode(-201, -600, -602, -603);
-            record.Database = Database;
-            string line1 = response.ReadUtf();
-            string line2 = response.ReadUtf();
-            if (string.IsNullOrEmpty(line1)
-                || string.IsNullOrEmpty(line2))
+            using (Response response = ExecuteQuery(query))
             {
-                // If AUTOIN.GBL missin from the database,
-                // server returns no updated record
+                response.CheckReturnCode(-201, -600, -602, -603);
+                record.Database = Database;
+                string line1 = response.ReadUtf();
+                string line2 = response.ReadUtf();
+                if (string.IsNullOrEmpty(line1)
+                    || string.IsNullOrEmpty(line2))
+                {
+                    // If AUTOIN.GBL missin from the database,
+                    // server returns no updated record
+                    return record;
+                }
+
+                MarcRecord.ParseOneOfMany(record,
+                    line1 + Utility.ShortDelimiter + line2);
                 return record;
             }
-            MarcRecord.ParseOneOfMany(record,
-                line1 + Utility.ShortDelimiter + line2);
-            return record;
         }
     }
 
@@ -1224,11 +1243,11 @@ namespace TinyClient
             AddLineFeed();
         }
 
-        public void Add(bool value)
-        {
-            string text = value ? "1" : "0";
-            AddAnsi(text);
-        }
+        //public void Add(bool value)
+        //{
+        //    string text = value ? "1" : "0";
+        //    AddAnsi(text);
+        //}
 
         public void Add(int value)
         {
@@ -1267,7 +1286,7 @@ namespace TinyClient
             AddLineFeed();
         }
 
-        public byte[] Encode()
+        public byte[][] Encode()
         {
             byte[] buffer = _stream.ToArray();
             byte[] prefix = Utility.Ansi.GetBytes
@@ -1275,11 +1294,9 @@ namespace TinyClient
                     buffer.Length.ToString(CultureInfo.InvariantCulture)
                     + "\n"
                 );
-            byte[] result
-                = new byte[prefix.Length + buffer.Length];
-            Array.Copy(prefix, result, prefix.Length);
-            Array.Copy(buffer, 0, result, prefix.Length,
-                buffer.Length);
+            byte[][] result = new byte[2][];
+            result[0] = prefix;
+            result[1] = buffer;
 
             return result;
         }
@@ -1296,7 +1313,8 @@ namespace TinyClient
     sealed class Response
         : IDisposable
     {
-        private readonly MemoryStream _stream;
+        private readonly TcpClient _tcpClient;
+        private readonly NetworkStream _stream;
 
         public string Command
         {
@@ -1322,38 +1340,13 @@ namespace TinyClient
             set { _returnCode = value; }
         }
 
-        public bool IsEOF { get { return _stream.Position >= _stream.Length; } }
-
         private string _command;
         private int _clientID, _queryID, _returnCode;
 
-        public Response(IrbisClient client, NetworkStream network)
+        public Response(IrbisClient client, TcpClient tcpClient, NetworkStream network)
         {
-            _stream = new MemoryStream();
-
-            byte[] buffer = new byte[32 * 1024];
-            while (true)
-            {
-                int read = network.Read(buffer, 0, buffer.Length);
-                if (read <= 0)
-                {
-                    break;
-                }
-                _stream.Write(buffer, 0, read);
-            }
-
-            if (!ReferenceEquals(client.DebugOutput, null))
-            {
-                client.DebugOutput.WriteLine("RESPONSE {0}:",
-                    client.QueryID);
-                client.DebugOutput.WriteLine();
-                Utility.DumpBytes(client.DebugOutput,
-                    _stream.ToArray());
-                client.DebugOutput.WriteLine();
-            }
-
-            _stream.Seek(0, SeekOrigin.Begin);
-
+            _tcpClient = tcpClient;
+            _stream = network;
             Command = ReadAnsi();
             ClientID = ReadInt32();
             QueryID = ReadInt32();
@@ -1387,6 +1380,8 @@ namespace TinyClient
                     }
                     if (one == 0x0D)
                     {
+                        // TODO push back
+
                         one = _stream.ReadByte();
                         if (one == 0x0A)
                         {
@@ -1426,9 +1421,13 @@ namespace TinyClient
         public string[] ReadRemainingAnsiLines()
         {
             ArrayList list = new ArrayList();
-            while (!IsEOF)
+            while (true)
             {
                 string line = ReadAnsi();
+                if (line.Length == 0)
+                {
+                    break;
+                }
                 list.Add(line);
             }
             string[] result = new string[list.Count];
@@ -1439,9 +1438,13 @@ namespace TinyClient
         public string[] ReadRemainingUtfLines()
         {
             ArrayList list = new ArrayList();
-            while (!IsEOF)
+            while (true)
             {
                 string line = ReadUtf();
+                if (line.Length == 0)
+                {
+                    break;
+                }
                 list.Add(line);
             }
             string[] result = new string[list.Count];
@@ -1464,10 +1467,8 @@ namespace TinyClient
 
         public void Dispose()
         {
-            if (!ReferenceEquals(_stream, null))
-            {
-                _stream.Dispose();
-            }
+            _stream.Dispose();
+            _tcpClient.Close();
         }
     }
 
