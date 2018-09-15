@@ -21,6 +21,15 @@ using System.Text;
 
 #region ReSharper warnings
 
+// ReSharper disable ClassNeverInstantiated.Global
+// ReSharper disable FieldCanBeMadeReadOnly.Global
+// ReSharper disable UnusedMethodReturnValue.Global
+// ReSharper disable UseNullPropagation
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ArrangeAccessorOwnerBody
+// ReSharper disable UnusedMember.Global
+// ReSharper disable UseStringInterpolation
+
 // ReSharper disable ConvertToAutoProperty
 // ReSharper disable InconsistentNaming
 // ReSharper disable StringIndexOfIsCultureSpecific.2
@@ -1468,7 +1477,12 @@ namespace TinyClient
         public void Dispose()
         {
             _stream.Dispose();
+
+#if NETCORE
+            _tcpClient.Dispose();
+#else
             _tcpClient.Close();
+#endif
         }
     }
 
